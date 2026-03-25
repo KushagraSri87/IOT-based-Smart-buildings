@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Building Live Dashboard</title>
+  <style>
+    /* --- Modern Dashboard UI --- */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f6f8fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #24292f;
+    }
+
+    /* --- LOGIN SCREEN --- */
+    #login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+    input {
+      width: 90%;
+      padding: 14px;
+      margin: 10px 0;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+    }
+    input:focus { border-color: #0969da; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #0969da;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.2s;
+    }
+    button:hover { background-color: #0349b4; }
+    #error-msg { color: #cf222e; font-size: 14px; margin-top: 12px; display: none; font-weight: 500; }
+
+    /* --- DASHBOARD SCREEN --- */
+    #dashboard-container {
+      display: none; 
+      width: 100%;
+      max-width: 1100px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #dashboard-container h2 { font-size: 2rem; margin-bottom: 10px; }
+    #sync-status { font-size: 1rem; color: #2da44e; margin-bottom: 40px; font-weight: 500; }
+
+    /* Card Grid Layout */
+    .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+    .card {
+      background: white; padding: 40px 20px; border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04); width: 220px;
+      display: flex; flex-direction: column; justify-content: center;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card h3 { margin: 0 0 15px 0; color: #8c959f; font-size: 1.1rem; font-weight: 600; }
+    .card .value { font-size: 2.8rem; font-weight: 700; color: #24292f; }
+    .text-red { color: #cf222e !important; }
+    .text-green { color: #2da44e !important; }
+    .sub-text { font-size: 1rem; color: #8c959f; margin-top: 8px; font-weight: normal;}
+  </style>
+</head>
+<body>
+
+  <div id="login-container">
+    <h2>🏢 Smart Building</h2>
+    <p style="color: #57606a; margin-bottom: 25px;">Please log in to continue.</p>
+    <input type="text" id="user" placeholder="Username (admin)">
+    <input type="password" id="pass" placeholder="Password (iot2026)">
+    <button onclick="attemptLogin()" id="login-btn">Secure Login</button>
+    <div id="error-msg">Incorrect Username or Password.</div>
+  </div>
+
+  <div id="dashboard-container">
+    <h2>🏢 Smart Building Live Dashboard</h2>
+    <p id="sync-status">Status: Waiting for data...</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Temperature</h3>
+        <div class="value" id="val-temp">-- °C</div>
+      </div>
+      <div class="card">
+        <h3>Humidity</h3>
+        <div class="value" id="val-hum">-- %</div>
+      </div>
+      <div class="card">
+        <h3>Motion State</h3>
+        <div class="value" id="val-mot">--</div>
+      </div>
+      <div class="card">
+        <h3>Live Power</h3>
+        <div class="value" id="val-pow">-- W</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: 24px;">
+      <div class="card" style="width: 350px;">
+        <h3>Total Energy Used</h3>
+        <div class="value" id="val-energy">-- kWh</div>
+      </div>
+      <div class="card" style="width: 350px;">
+        <h3>Estimated Cost</h3>
+        <div class="value" id="val-cost">₹ --</div>
+        <div class="sub-text">Calculated at ₹7.50 / unit</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. FRONTEND LOGIN LOGIC (GitHub Pages Compatible) ---
+    function attemptLogin() {
+      const u = document.getElementById('user').value;
+      const p = document.getElementById('pass').value;
+      document.getElementById('login-btn').innerText = "Verifying...";
+      
+      // Simulating a quick network request for realism
+      setTimeout(() => {
+        if (u === 'admin' && p === 'iot2026') {
+          handleLoginResult(true);
+        } else {
+          handleLoginResult(false);
+        }
+      }, 600);
+    }
+
+    function handleLoginResult(isSuccess) {
+      if (isSuccess) {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('dashboard-container').style.display = 'block';
+        startIoTFeed(); 
+      } else {
+        document.getElementById('error-msg').style.display = 'block';
+        document.getElementById('login-btn').innerText = "Secure Login";
+      }
+    }
+
+    // --- 2. THINGSPEAK LOGIC ---
+    const tsUrl = 'https://api.thingspeak.com/channels/3307442/feeds/last.json?api_key=PI50S2J2ICSSSGUC';
+
+    async function fetchIoTData() {
+      try {
+        const response = await fetch(tsUrl);
+        const data = await response.json();
+
+        const temp = data.field1 ? parseFloat(data.field1).toFixed(1) : "0.0";
+        const hum = data.field2 ? parseFloat(data.field2).toFixed(1) : "0.0";
+        const pow = data.field5 ? parseFloat(data.field5).toFixed(2) : "0.00";
+        const energy = data.field6 ? parseFloat(data.field6).toFixed(4) : "0.0000";
+
+        document.getElementById('val-temp').innerText = temp + " °C";
+        document.getElementById('val-hum').innerText = hum + " %";
+        document.getElementById('val-pow').innerText = pow + " W";
+        document.getElementById('val-energy').innerText = energy + " kWh";
+
+        const cost = (parseFloat(energy) * 7.50).toFixed(2);
+        document.getElementById('val-cost').innerText = "₹ " + cost;
+
+        const motElem = document.getElementById('val-mot');
+        if (data.field3 == "1") {
+          motElem.innerHTML = "Detected <br><span style='font-size: 1.5rem;'>🚶</span>";
+          motElem.className = "value text-green"; 
+        } else {
+          motElem.innerHTML = "Empty <br><span style='font-size: 1.5rem;'>🛑</span>";
+          motElem.className = "value text-red";
+        }
+
+        const timeString = new Date().toLocaleTimeString();
+        document.getElementById('sync-status').innerHTML = `Status: Live 🟢 (Last update: ${timeString})`;
+        document.getElementById('sync-status').className = "text-green";
+
+      } catch (error) {
+        document.getElementById('sync-status').innerHTML = "Status: Connection Error 🔴";
+        document.getElementById('sync-status').className = "text-red";
+      }
+    }
+
+    function startIoTFeed() {
+      fetchIoTData(); 
+      setInterval(fetchIoTData, 16000); 
+    }
+  </script>
+</body>
+</html>
