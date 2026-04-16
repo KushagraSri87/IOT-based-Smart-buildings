@@ -44,7 +44,7 @@ void loop() {
   // ==========================================
   // 1. FAST TASKS (Instant Motion & Light)
   // ==========================================
-  int motion = digitalRead(PIRPIN);
+  int motion = digitalRead(PIRPIN); // Read motion sensor state 
   bool occupied = (motion == HIGH);
 
   if (occupied) {
