@@ -65,15 +65,15 @@ The goal is to minimize energy consumption, reduce manual effort, and promote su
 - Voice assistant integration  
 - Smart scheduling system  
 - Advanced analytics dashboard  
+- Integration with the Products
+
 
 ---
 
 ## 👨‍💻 Contributors
 - Your Name  
 - Kushagra Srivastava 
-- Ishan Thapa
-- Khushwant Kumar
-- Kunal Gupta
+
 
 ---
 
